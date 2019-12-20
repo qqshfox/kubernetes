@@ -173,18 +173,30 @@ func MarkAllPodsNotReady(kubeClient clientset.Interface, node *v1.Node) error {
 
 // ExistsInCloudProvider returns true if the node exists in the
 // cloud provider.
-func ExistsInCloudProvider(cloud cloudprovider.Interface, nodeName types.NodeName) (bool, error) {
+func ExistsInCloudProvider(cloud cloudprovider.Interface, node *v1.Node) (bool, error) {
 	instances, ok := cloud.Instances()
 	if !ok {
 		return false, fmt.Errorf("%v", ErrCloudInstance)
 	}
-	if _, err := instances.InstanceID(context.TODO(), nodeName); err != nil {
-		if err == cloudprovider.InstanceNotFound {
+
+	providerID := node.Spec.ProviderID
+	if providerID == "" {
+		var err error
+		providerID, err = instances.InstanceID(context.TODO(), types.NodeName(node.Name))
+		if err != nil {
+			if err == cloudprovider.InstanceNotFound {
+				return false, nil
+			}
+			return false, err
+		}
+
+		if providerID == "" {
+			klog.Warningf("Cannot find valid providerID for node name %q, assuming non existence", node.Name)
 			return false, nil
 		}
-		return false, err
 	}
-	return true, nil
+
+	return instances.InstanceExistsByProviderID(context.TODO(), providerID)
 }
 
 // ShutdownInCloudProvider returns true if the node is shutdowned in

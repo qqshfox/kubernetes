@@ -1545,7 +1545,7 @@ func TestCloudProviderNoRateLimit(t *testing.T) {
 	nodeController.cloud = &fakecloud.FakeCloud{}
 	nodeController.now = func() metav1.Time { return metav1.Date(2016, 1, 1, 12, 0, 0, 0, time.UTC) }
 	nodeController.recorder = testutil.NewFakeRecorder()
-	nodeController.nodeExistsInCloudProvider = func(nodeName types.NodeName) (bool, error) {
+	nodeController.nodeExistsInCloudProvider = func(node *v1.Node) (bool, error) {
 		return false, nil
 	}
 	nodeController.nodeShutdownInCloudProvider = func(ctx context.Context, node *v1.Node) (bool, error) {
@@ -3192,7 +3192,7 @@ func TestNodeEventGeneration(t *testing.T) {
 		testNodeMonitorPeriod,
 		false)
 	nodeController.cloud = &fakecloud.FakeCloud{}
-	nodeController.nodeExistsInCloudProvider = func(nodeName types.NodeName) (bool, error) {
+	nodeController.nodeExistsInCloudProvider = func(node *v1.Node) (bool, error) {
 		return false, nil
 	}
 	nodeController.nodeShutdownInCloudProvider = func(ctx context.Context, node *v1.Node) (bool, error) {

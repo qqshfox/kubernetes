@@ -37,7 +37,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -183,7 +182,7 @@ type Controller struct {
 	leaseInformerSynced         cache.InformerSynced
 	nodeLister                  corelisters.NodeLister
 	nodeInformerSynced          cache.InformerSynced
-	nodeExistsInCloudProvider   func(types.NodeName) (bool, error)
+	nodeExistsInCloudProvider   func(*v1.Node) (bool, error)
 	nodeShutdownInCloudProvider func(context.Context, *v1.Node) (bool, error)
 
 	recorder record.EventRecorder
@@ -285,8 +284,8 @@ func NewNodeLifecycleController(
 		now:           metav1.Now,
 		knownNodeSet:  make(map[string]*v1.Node),
 		nodeHealthMap: make(map[string]*nodeHealthData),
-		nodeExistsInCloudProvider: func(nodeName types.NodeName) (bool, error) {
-			return nodeutil.ExistsInCloudProvider(cloud, nodeName)
+		nodeExistsInCloudProvider: func(node *v1.Node) (bool, error) {
+			return nodeutil.ExistsInCloudProvider(cloud, node)
 		},
 		nodeShutdownInCloudProvider: func(ctx context.Context, node *v1.Node) (bool, error) {
 			return nodeutil.ShutdownInCloudProvider(ctx, cloud, node)
@@ -810,7 +809,7 @@ func (nc *Controller) monitorNodeHealth() error {
 					}
 					continue
 				}
-				exists, err := nc.nodeExistsInCloudProvider(types.NodeName(node.Name))
+				exists, err := nc.nodeExistsInCloudProvider(node)
 				if err != nil {
 					klog.Errorf("Error determining if node %v exists in cloud: %v", node.Name, err)
 					continue

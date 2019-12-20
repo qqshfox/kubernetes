@@ -34,6 +34,7 @@ import (
 	fakecloud "k8s.io/kubernetes/pkg/cloudprovider/providers/fake"
 	"k8s.io/kubernetes/pkg/controller"
 	"k8s.io/kubernetes/pkg/controller/testutil"
+	nodectrlutil "k8s.io/kubernetes/pkg/controller/util/node"
 	kubeletapis "k8s.io/kubernetes/pkg/kubelet/apis"
 	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
 
@@ -148,8 +149,7 @@ func TestEnsureNodeExistsByProviderID(t *testing.T) {
 				}
 			}
 
-			instances, _ := fc.Instances()
-			exists, err := ensureNodeExistsByProviderID(instances, tc.node)
+			exists, err := nodectrlutil.ExistsInCloudProvider(fc, tc.node)
 			assert.Equal(t, err, tc.providerIDErr)
 
 			assert.EqualValues(t, tc.expectedCalls, fc.Calls,
